@@ -6,7 +6,7 @@ WASM_DIR := target/wasm32v1-none/release
 
 SHELL := bash
 
-.PHONY: all help build release-build optimize test test-all fmt lint lint-js check-node-versions check check-docs check-storage-keys check-deploy-scripts \
+.PHONY: all help build release-build optimize test test-all fmt lint lint-js check-node-versions check check-docs check-storage-keys check-deploy-scripts check-reachability \
         size size-check doc audit bench deploy e2e clean fuzz-amm fuzz-amm-nightly fuzz-cl
 
 # Bare `make` explains itself instead of building.
@@ -77,6 +77,10 @@ check-storage-keys: ## Fail if a TWAP/TWAL storage key is built from the ledger 
 check-deploy-scripts: ## Fail if a deployable contract has no scripts/deploy/ module wired into deploy.sh
 	bash scripts/check_deploy_scripts.sh
 
+check-reachability: ## Fail if a module under a package's src/ is not reachable from its entrypoint
+	node scripts/check_reachability.mjs
+	node --test scripts/check_reachability.test.mjs
+
 size: ## Print a WASM size report for all built contracts
 	bash scripts/size_report.sh
 
@@ -93,7 +97,7 @@ audit: ## Run a security audit of dependencies (cargo install cargo-audit if mis
 	}
 	cargo audit
 
-check: fmt lint test check-docs check-storage-keys check-deploy-scripts size-check doc ## Run the checks CI enforces before pushing
+check: fmt lint test check-docs check-storage-keys check-deploy-scripts check-reachability size-check doc ## Run the checks CI enforces before pushing
 
 bench: ## Run hot-path benchmarks
 	cargo run -p benches -- --check
